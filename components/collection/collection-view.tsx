@@ -42,6 +42,7 @@ import {
   Search
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import * as XLSX from 'xlsx';
 
 export function CollectionView({
   name,
@@ -540,6 +541,25 @@ export function CollectionView({
     }
   }
 
+    function handleClick() {
+      const date = new Date();
+      const dateString = `${date.getFullYear()}_${date.getMonth() + 1}_${date.getDate()}`;
+      const wb = XLSX.utils.book_new();
+      const columnNames = data[0] ? Object.keys(data[0].fields) : [];
+      const rows = data.map((item) => {
+        const row: any = {};
+        columnNames.forEach((col) => {
+          row[col] = item.fields[col];
+        });
+        return row;
+      });
+      const ws = XLSX.utils.json_to_sheet(rows);
+      XLSX.utils.book_append_sheet(wb, ws, "Collection Data");
+      const capitalizedCollectionName = schema.name.charAt(0).toUpperCase() + schema.name.slice(1);
+      const fileName = `${capitalizedCollectionName}_Export_${dateString}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+  }
+
   return (
     <>
       <div className="flex-1 flex flex-col space-y-6">
@@ -570,6 +590,14 @@ export function CollectionView({
             href={`/${config.owner}/${config.repo}/${encodeURIComponent(config.branch)}/collection/${encodeURIComponent(name)}/new${schema.view?.layout !== 'tree' && path && path !== schema.path ? `?parent=${encodeURIComponent(path)}` : ""}`}
           >
               Add an entry
+          </Link>
+          <Link
+            className={cn(buttonVariants({size: "sm"}), "hidden sm:flex")}
+            href=""
+            onClick={handleClick}
+           
+          >
+              Export data
           </Link>
           <Link
             className={cn(buttonVariants({size: "icon-sm"}), "sm:hidden shrink-0")}
